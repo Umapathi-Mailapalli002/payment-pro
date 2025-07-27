@@ -2,19 +2,37 @@ import express, { Request, Response } from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import connectDB from './db';
 
 dotenv.config();
 
 const app = express();
+
 app.use(cors({
   origin: 'http://localhost:5173',
   methods: ['GET', 'POST'],
   credentials: true
 }));
+
 app.use(express.json());
 
+connectDB()
+  .then(() => {
+    app.on('error', (err) => {
+      console.error('❌ Server error:', err);
+      throw err;
+    });
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('❌ Failed to connect to the database:', error);
+  });
+
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-06-30.basil', 
+  apiVersion: '2025-06-30.basil',
 });
 
 const PORT = process.env.PORT || '5000';
@@ -42,6 +60,4 @@ app.post('/create-payment-intent', async (req: Request, res: Response) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+
